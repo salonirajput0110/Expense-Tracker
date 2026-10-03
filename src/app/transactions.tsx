@@ -1,8 +1,7 @@
-
-
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
+  Alert,
   FlatList,
   Pressable,
   ScrollView,
@@ -11,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { initDatabase } from "../database";
+import { deleteTransaction, initDatabase } from "../database";
 import { useTheme } from "../theme";
 
 type Transaction = {
@@ -80,6 +79,27 @@ export default function Transactions() {
     }, []),
   );
 
+  const handleDelete = (id: number) => {
+    Alert.alert(
+      "Delete Transaction",
+      "Are you sure you want to delete this transaction?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            await deleteTransaction(id);
+            await loadTransactions();
+          },
+        },
+      ],
+    );
+  };
+
   const filteredTransactions = transactions.filter((item) => {
     const categoryMatch =
       selectedCategory === "All" ||
@@ -107,14 +127,9 @@ export default function Transactions() {
 
   return (
     <SafeAreaView
-      style={[
-        styles.container,
-        { backgroundColor: theme.background },
-      ]}
+      style={[styles.container, { backgroundColor: theme.background }]}
     >
-      <Text style={[styles.title, { color: theme.text }]}>
-        Transactions
-      </Text>
+      <Text style={[styles.title, { color: theme.text }]}>Transactions</Text>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -133,9 +148,7 @@ export default function Transactions() {
                 styles.categoryButton,
                 {
                   backgroundColor:
-                    selectedCategory === category
-                      ? theme.primary
-                      : theme.card,
+                    selectedCategory === category ? theme.primary : theme.card,
                   borderColor: theme.border,
                 },
               ]}
@@ -145,10 +158,7 @@ export default function Transactions() {
                 style={[
                   styles.categoryButtonText,
                   {
-                    color:
-                      selectedCategory === category
-                        ? "white"
-                        : theme.text,
+                    color: selectedCategory === category ? "white" : theme.text,
                   },
                 ]}
               >
@@ -171,9 +181,7 @@ export default function Transactions() {
                 styles.categoryButton,
                 {
                   backgroundColor:
-                    selectedMonth === month
-                      ? theme.primary
-                      : theme.card,
+                    selectedMonth === month ? theme.primary : theme.card,
                   borderColor: theme.border,
                 },
               ]}
@@ -183,10 +191,7 @@ export default function Transactions() {
                 style={[
                   styles.categoryButtonText,
                   {
-                    color:
-                      selectedMonth === month
-                        ? "white"
-                        : theme.text,
+                    color: selectedMonth === month ? "white" : theme.text,
                   },
                 ]}
               >
@@ -238,47 +243,29 @@ export default function Transactions() {
           </Text>
 
           <Text
-            style={[
-              styles.analyticsSubtitle,
-              { color: theme.secondaryText },
-            ]}
+            style={[styles.analyticsSubtitle, { color: theme.secondaryText }]}
           >
             Spending by category
           </Text>
 
           {categoryTotals.length === 0 ? (
-            <Text
-              style={[
-                styles.noAnalytics,
-                { color: theme.secondaryText },
-              ]}
-            >
+            <Text style={[styles.noAnalytics, { color: theme.secondaryText }]}>
               Add expenses to see your analytics.
             </Text>
           ) : (
             categoryTotals.map((item) => {
               const barWidth =
-                highestExpense > 0
-                  ? (item.total / highestExpense) * 100
-                  : 0;
+                highestExpense > 0 ? (item.total / highestExpense) * 100 : 0;
 
               return (
                 <View key={item.category} style={styles.chartRow}>
                   <View style={styles.chartHeader}>
-                    <Text
-                      style={[
-                        styles.chartCategory,
-                        { color: theme.text },
-                      ]}
-                    >
+                    <Text style={[styles.chartCategory, { color: theme.text }]}>
                       {item.category}
                     </Text>
 
                     <Text
-                      style={[
-                        styles.chartAmount,
-                        { color: theme.expense },
-                      ]}
+                      style={[styles.chartAmount, { color: theme.expense }]}
                     >
                       ₹{item.total}
                     </Text>
@@ -317,9 +304,7 @@ export default function Transactions() {
               },
             ]}
           >
-            <Text style={{ color: theme.text }}>
-              No transactions found
-            </Text>
+            <Text style={{ color: theme.text }}>No transactions found</Text>
           </View>
         ) : (
           <FlatList
@@ -337,32 +322,31 @@ export default function Transactions() {
                 ]}
               >
                 <View style={styles.transactionInfo}>
-                  <Text
-                    style={[
-                      styles.category,
-                      { color: theme.text },
-                    ]}
-                  >
+                  <Text style={[styles.category, { color: theme.text }]}>
                     {item.category}
                   </Text>
 
                   <Text
-                    style={[
-                      styles.description,
-                      { color: theme.secondaryText },
-                    ]}
+                    style={[styles.description, { color: theme.secondaryText }]}
                   >
                     {item.description || "No description"}
                   </Text>
 
-                  <Text
-                    style={[
-                      styles.date,
-                      { color: theme.secondaryText },
-                    ]}
-                  >
+                  <Text style={[styles.date, { color: theme.secondaryText }]}>
                     {new Date(item.date).toLocaleDateString()}
                   </Text>
+
+                  <Pressable
+                    onPress={() => handleDelete(item.id)}
+                    style={[
+                      styles.deleteButton,
+                      { backgroundColor: theme.expenseLight },
+                    ]}
+                  >
+                    <Text style={[styles.deleteText, { color: theme.expense }]}>
+                      Delete
+                    </Text>
+                  </Pressable>
                 </View>
 
                 <Text
@@ -370,9 +354,7 @@ export default function Transactions() {
                     styles.amount,
                     {
                       color:
-                        item.type === "income"
-                          ? theme.income
-                          : theme.expense,
+                        item.type === "income" ? theme.income : theme.expense,
                     },
                   ]}
                 >
@@ -535,6 +517,19 @@ const styles = StyleSheet.create({
   date: {
     marginTop: 5,
     fontSize: 12,
+  },
+
+  deleteButton: {
+    alignSelf: "flex-start",
+    marginTop: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+
+  deleteText: {
+    fontSize: 12,
+    fontWeight: "700",
   },
 
   amount: {

@@ -42,6 +42,16 @@ export async function addTransaction(
   );
 }
 
+// DELETE TRANSACTION
+export async function deleteTransaction(id: number) {
+  const db = await initDatabase();
+
+  await db.runAsync(
+    "DELETE FROM transactions WHERE id = ?",
+    id
+  );
+}
+
 export async function saveBudget(amount: number) {
   const db = await initDatabase();
 
